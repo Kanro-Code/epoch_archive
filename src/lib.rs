@@ -2,3 +2,4 @@
 
 mod epoch;
 pub use epoch::Epoch;
+pub use epoch::Precision;
