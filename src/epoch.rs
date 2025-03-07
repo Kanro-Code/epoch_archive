@@ -1,8 +1,9 @@
+const DELIMITER: char = '.';
+
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Epoch {
     epoch: i64,
     precision: Precision,
-    delimiter: char,
 }
 
 impl Epoch {
@@ -107,20 +108,6 @@ impl Epoch {
         }
     }
 
-    /// Set the delimiter character that is used to separate the epoch value from the millisecond value.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use epoch_archive::{Epoch, Precision};
-    ///
-    /// let epoch = Epoch::new(1337).with_millis(123).with_delimiter(':');
-    /// assert_eq!(epoch.to_string(), "1337:123");
-    /// ```
-    pub fn with_delimiter(self, delimiter: char) -> Self {
-        Self { delimiter, ..self }
-    }
-
     // -----------------------------
     // ---------- GETTERS ----------
     // -----------------------------
@@ -137,20 +124,25 @@ impl Epoch {
         &self.precision
     }
 
-    /// Returns the delimiter character.
-    pub fn delimiter(&self) -> char {
-        self.delimiter
+    /// Returns the epoch value as a string with the specified delimiter.
+    pub fn format_with_delimiter(&self, delimiter: char) -> String {
+        match self.precision {
+            Precision::None => format!("{:}", self.epoch),
+            Precision::Milli(ms) => format!("{:}{}{:03}", self.epoch, delimiter, ms),
+            Precision::Micro(us) => format!("{:}{}{:06}", self.epoch, delimiter, us),
+            Precision::Nano(ns) => format!("{:}{}{:09}", self.epoch, delimiter, ns),
+        }
+    }
+
+    /// Returns the epoch value as a string.
+    pub fn format(&self) -> String {
+        Self::format_with_delimiter(self, DELIMITER)
     }
 }
 
 impl std::fmt::Display for Epoch {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self.precision {
-            Precision::None => write!(f, "{:}", self.epoch),
-            Precision::Milli(ms) => write!(f, "{:}{}{:03}", self.epoch, self.delimiter, ms),
-            Precision::Micro(us) => write!(f, "{:}{}{:06}", self.epoch, self.delimiter, us),
-            Precision::Nano(ns) => write!(f, "{:}{}{:09}", self.epoch, self.delimiter, ns),
-        }
+        write!(f, "{}", self.format())
     }
 }
 
@@ -159,7 +151,6 @@ impl Default for Epoch {
         Self {
             epoch: 0,
             precision: Precision::None,
-            delimiter: '.',
         }
     }
 }
@@ -252,20 +243,10 @@ mod tests {
     }
 
     #[test]
-    fn test_with_delimiter() {
-        let delimiters = ['a', ':', '-'];
-        for delimiter in delimiters {
-            let epoch = Epoch::new(0).with_delimiter(delimiter);
-            assert_eq!(epoch.delimiter, delimiter);
-        }
-    }
-
-    #[test]
     fn test_default() {
         let default = Epoch::default();
         assert_eq!(default.epoch, 0);
         assert!(matches!(default.precision, Precision::None));
-        assert_eq!(default.delimiter, '.');
     }
 
     #[test]
@@ -355,8 +336,8 @@ mod tests {
         ];
 
         for (epoch, ms, delimiter, expected) in epochs {
-            let epoch = Epoch::new(epoch).with_millis(ms).with_delimiter(delimiter);
-            assert_eq!(epoch.to_string(), expected);
+            let epoch = Epoch::new(epoch).with_millis(ms);
+            assert_eq!(epoch.format_with_delimiter(delimiter), expected);
         }
     }
 }
