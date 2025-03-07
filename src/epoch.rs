@@ -3,7 +3,7 @@ const DELIMITER: char = '.';
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Epoch {
     epoch: i64,
-    precision: Precision,
+    subsecond: SubSecond,
 }
 
 impl Epoch {
@@ -43,7 +43,7 @@ impl Epoch {
     }
 
     /// Sets the millisecond value.
-    /// If another precision is already set, this will override it.
+    /// If another subsecond is already set, this will override it.
     ///
     /// # Panics
     /// Will panic if ms is >= 1000
@@ -51,21 +51,21 @@ impl Epoch {
     /// # Examples
     ///
     /// ```
-    /// use epoch_archive::{Epoch, Precision};
+    /// use epoch_archive::{Epoch, SubSecond};
     ///
     /// let epoch = Epoch::new(0).with_millis(123);
-    /// assert!(matches!(epoch.precision(), Precision::Milli(123)));
+    /// assert!(matches!(epoch.subsecond(), SubSecond::Milli(123)));
     /// ```
     pub fn with_millis(self, millis: u16) -> Self {
         assert!(millis < 1000, "assertion failed: millis < 1000");
         Self {
-            precision: Precision::Milli(millis),
+            subsecond: SubSecond::Milli(millis),
             ..self
         }
     }
 
     /// Sets the microsecond value.
-    /// If another precision is already set, this will override it.
+    /// If another subsecond is already set, this will override it.
     ///
     /// # Panics
     /// Will panic if micros is >= 1000000
@@ -73,21 +73,21 @@ impl Epoch {
     /// # Examples
     ///
     /// ```
-    /// use epoch_archive::{Epoch, Precision};
+    /// use epoch_archive::{Epoch, SubSecond};
     ///
     /// let epoch = Epoch::new(0).with_micros(123);
-    /// assert!(matches!(epoch.precision(), Precision::Micro(123)));
+    /// assert!(matches!(epoch.subsecond(), SubSecond::Micro(123)));
     /// ```
     pub fn with_micros(self, micros: u32) -> Self {
         assert!(micros < 1000000, "assertion failed: micros < 1000000");
         Self {
-            precision: Precision::Micro(micros),
+            subsecond: SubSecond::Micro(micros),
             ..self
         }
     }
 
     /// Sets the nanosecond value.
-    /// If another precision is already set, this will override it.
+    /// If another subsecond is already set, this will override it.
     ///
     /// # Panics
     /// Will panic if ns is >= 1000000000
@@ -95,15 +95,15 @@ impl Epoch {
     /// # Examples
     ///
     /// ```
-    /// use epoch_archive::{Epoch, Precision};
+    /// use epoch_archive::{Epoch, SubSecond};
     ///
     /// let epoch = Epoch::new(0).with_nanos(123);
-    /// assert!(matches!(epoch.precision(), Precision::Nano(123)));
+    /// assert!(matches!(epoch.subsecond(), SubSecond::Nano(123)));
     /// ```
     pub fn with_nanos(self, nanos: u64) -> Self {
         assert!(nanos < 1000000000, "assertion failed: nanos < 1000000000");
         Self {
-            precision: Precision::Nano(nanos),
+            subsecond: SubSecond::Nano(nanos),
             ..self
         }
     }
@@ -120,17 +120,17 @@ impl Epoch {
     /// Returns the optional millisecond value.
     ///
     /// If no value is present, this returns None.
-    pub fn precision(&self) -> &Precision {
-        &self.precision
+    pub fn subsecond(&self) -> &SubSecond {
+        &self.subsecond
     }
 
     /// Returns the epoch value as a string with the specified delimiter.
     pub fn format_with_delimiter(&self, delimiter: char) -> String {
-        match self.precision {
-            Precision::None => format!("{:}", self.epoch),
-            Precision::Milli(ms) => format!("{:}{}{:03}", self.epoch, delimiter, ms),
-            Precision::Micro(us) => format!("{:}{}{:06}", self.epoch, delimiter, us),
-            Precision::Nano(ns) => format!("{:}{}{:09}", self.epoch, delimiter, ns),
+        match self.subsecond {
+            SubSecond::None => format!("{:}", self.epoch),
+            SubSecond::Milli(ms) => format!("{:}{}{:03}", self.epoch, delimiter, ms),
+            SubSecond::Micro(us) => format!("{:}{}{:06}", self.epoch, delimiter, us),
+            SubSecond::Nano(ns) => format!("{:}{}{:09}", self.epoch, delimiter, ns),
         }
     }
 
@@ -150,13 +150,13 @@ impl Default for Epoch {
     fn default() -> Self {
         Self {
             epoch: 0,
-            precision: Precision::None,
+            subsecond: SubSecond::None,
         }
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub enum Precision {
+pub enum SubSecond {
     None,
     Milli(u16),
     Micro(u32),
@@ -196,7 +196,7 @@ mod tests {
         for epoch in TEST_EPOCH {
             for ms in TEST_MS {
                 let new = Epoch::new(epoch).with_millis(ms);
-                assert_eq!(new.precision, Precision::Milli(ms));
+                assert_eq!(new.subsecond, SubSecond::Milli(ms));
                 assert_eq!(new.epoch, epoch);
             }
         }
@@ -207,7 +207,7 @@ mod tests {
         for epoch in TEST_EPOCH {
             for ms in TEST_US {
                 let new = Epoch::new(epoch).with_micros(ms);
-                assert_eq!(new.precision, Precision::Micro(ms));
+                assert_eq!(new.subsecond, SubSecond::Micro(ms));
                 assert_eq!(new.epoch, epoch);
             }
         }
@@ -218,7 +218,7 @@ mod tests {
         for epoch in TEST_EPOCH {
             for ms in TEST_NS {
                 let new = Epoch::new(epoch).with_nanos(ms);
-                assert_eq!(new.precision, Precision::Nano(ms));
+                assert_eq!(new.subsecond, SubSecond::Nano(ms));
                 assert_eq!(new.epoch, epoch);
             }
         }
@@ -246,7 +246,7 @@ mod tests {
     fn test_default() {
         let default = Epoch::default();
         assert_eq!(default.epoch, 0);
-        assert!(matches!(default.precision, Precision::None));
+        assert!(matches!(default.subsecond, SubSecond::None));
     }
 
     #[test]
