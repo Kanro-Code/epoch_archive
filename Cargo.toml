@@ -2,6 +2,11 @@
 name = "epoch_archive"
 version = "0.1.0"
 edition = "2024"
+description = "Epoch Archive is a simple library for encoding and decoding data that use timestamps (epochs) as the key. Data is encoding with serde and compressed with ZSTD."
+license = "MIT"
+repository = "https://github.com/Kanro-Code/epoch_archive"
+keywords = ["epoch, archive, serde, zstd"]
+categories = ["data-structures", "encoding", "compression"]
 
 [dependencies]
 serde = {version = "1.0.218", features = ["derive"]}

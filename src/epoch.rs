@@ -21,6 +21,7 @@ impl Epoch {
     /// let epoch = Epoch::new(1337);
     /// assert_eq!(epoch.epoch(), 1337);
     /// ```
+    #[must_use]
     pub fn new(epoch: i64) -> Self {
         Self {
             epoch,
@@ -38,6 +39,7 @@ impl Epoch {
     /// let epoch = Epoch::new(1337).with_epoch(123);
     /// assert_eq!(epoch.epoch(), 123);
     /// ```
+    #[must_use]
     pub fn with_epoch(self, epoch: i64) -> Self {
         Self { epoch, ..self }
     }
@@ -56,6 +58,7 @@ impl Epoch {
     /// let epoch = Epoch::new(0).with_millis(123);
     /// assert!(matches!(epoch.subsecond(), SubSecond::Milli(123)));
     /// ```
+    #[must_use]
     pub fn with_millis(self, millis: u16) -> Self {
         assert!(millis < 1000, "assertion failed: millis < 1000");
         Self {
@@ -78,8 +81,9 @@ impl Epoch {
     /// let epoch = Epoch::new(0).with_micros(123);
     /// assert!(matches!(epoch.subsecond(), SubSecond::Micro(123)));
     /// ```
+    #[must_use]
     pub fn with_micros(self, micros: u32) -> Self {
-        assert!(micros < 1000000, "assertion failed: micros < 1000000");
+        assert!(micros < 1_000_000, "assertion failed: micros < 1000000");
         Self {
             subsecond: SubSecond::Micro(micros),
             ..self
@@ -100,8 +104,12 @@ impl Epoch {
     /// let epoch = Epoch::new(0).with_nanos(123);
     /// assert!(matches!(epoch.subsecond(), SubSecond::Nano(123)));
     /// ```
+    #[must_use]
     pub fn with_nanos(self, nanos: u64) -> Self {
-        assert!(nanos < 1000000000, "assertion failed: nanos < 1000000000");
+        assert!(
+            nanos < 1_000_000_000,
+            "assertion failed: nanos < 1000000000"
+        );
         Self {
             subsecond: SubSecond::Nano(nanos),
             ..self
@@ -113,6 +121,7 @@ impl Epoch {
     // -----------------------------
 
     /// Returns the epoch value.
+    #[must_use]
     pub fn epoch(&self) -> i64 {
         self.epoch
     }
@@ -120,11 +129,13 @@ impl Epoch {
     /// Returns the optional millisecond value.
     ///
     /// If no value is present, this returns None.
+    #[must_use]
     pub fn subsecond(&self) -> &SubSecond {
         &self.subsecond
     }
 
     /// Returns the epoch value as a string with the specified delimiter.
+    #[must_use]
     pub fn format_with_delimiter(&self, delimiter: char) -> String {
         match self.subsecond {
             SubSecond::None => format!("{:}", self.epoch),
@@ -135,6 +146,7 @@ impl Epoch {
     }
 
     /// Returns the epoch value as a string.
+    #[must_use]
     pub fn format(&self) -> String {
         Self::format_with_delimiter(self, DELIMITER)
     }
@@ -180,8 +192,8 @@ mod tests {
     ];
 
     const TEST_MS: [u16; 4] = [0, 1, 999, 123];
-    const TEST_US: [u32; 4] = [0, 1, 999999, 123123];
-    const TEST_NS: [u64; 4] = [0, 1, 999999999, 123123123];
+    const TEST_US: [u32; 4] = [0, 1, 999_999, 123_123];
+    const TEST_NS: [u64; 4] = [0, 1, 999_999_999, 123_123_123];
 
     #[test]
     fn test_new() {
@@ -226,20 +238,23 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "assertion failed: millis < 1000")]
+    #[allow(unused_must_use)]
     fn test_with_ms_panic() {
         Epoch::new(0).with_millis(1000);
     }
 
     #[test]
     #[should_panic(expected = "assertion failed: micros < 1000000")]
+    #[allow(unused_must_use)]
     fn test_with_micros_panic() {
-        Epoch::new(0).with_micros(1000000);
+        Epoch::new(0).with_micros(1_000_000);
     }
 
     #[test]
     #[should_panic(expected = "assertion failed: nanos < 1000000000")]
+    #[allow(unused_must_use)]
     fn test_with_nanos_panic() {
-        Epoch::new(0).with_nanos(1000000000);
+        Epoch::new(0).with_nanos(1_000_000_000);
     }
 
     #[test]
@@ -290,13 +305,13 @@ mod tests {
     fn test_display_with_micros() {
         let epochs = [
             (0, 0, "0.000000"),
-            (0, 999999, "0.999999"),
-            (1, 123123, "1.123123"),
-            (-1, 123123, "-1.123123"),
-            (123, 999999, "123.999999"),
-            (-123, 999999, "-123.999999"),
-            (i64::MAX, 999999, "9223372036854775807.999999"),
-            (i64::MIN, 999999, "-9223372036854775808.999999"),
+            (0, 999_999, "0.999999"),
+            (1, 123_123, "1.123123"),
+            (-1, 123_123, "-1.123123"),
+            (123, 999_999, "123.999999"),
+            (-123, 999_999, "-123.999999"),
+            (i64::MAX, 999_999, "9223372036854775807.999999"),
+            (i64::MIN, 999_999, "-9223372036854775808.999999"),
         ];
 
         for (epoch, ms, expected) in epochs {
@@ -309,13 +324,13 @@ mod tests {
     fn test_display_with_nanos() {
         let epochs = [
             (0, 0, "0.000000000"),
-            (0, 999999999, "0.999999999"),
-            (1, 123123123, "1.123123123"),
-            (-1, 123123123, "-1.123123123"),
-            (123, 999999999, "123.999999999"),
-            (-123, 999999999, "-123.999999999"),
-            (i64::MAX, 999999999, "9223372036854775807.999999999"),
-            (i64::MIN, 999999999, "-9223372036854775808.999999999"),
+            (0, 999_999_999, "0.999999999"),
+            (1, 123_123_123, "1.123123123"),
+            (-1, 123_123_123, "-1.123123123"),
+            (123, 999_999_999, "123.999999999"),
+            (-123, 999_999_999, "-123.999999999"),
+            (i64::MAX, 999_999_999, "9223372036854775807.999999999"),
+            (i64::MIN, 999_999_999, "-9223372036854775808.999999999"),
         ];
 
         for (epoch, ms, expected) in epochs {
