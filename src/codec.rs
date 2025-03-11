@@ -49,8 +49,8 @@ impl Codec {
     where
         T: for<'de> Deserialize<'de>,
     {
-        let decompressed = Self::decompress(data)?;
-        let deserialized = Self::deserialize::<T>(&decompressed)?;
+        let decompressed = self.decompress(data)?;
+        let deserialized = self.deserialize::<T>(&decompressed)?;
 
         Ok(deserialized)
     }
@@ -77,7 +77,7 @@ impl Codec {
     /// # Errors
     ///
     /// Return `epoch_archive::CodecError` if there is an issue decompressing the data.
-    pub fn decompress(data: &[u8]) -> Result<Vec<u8>> {
+    pub fn decompress(&self, data: &[u8]) -> Result<Vec<u8>> {
         Ok(zstd::decode_all(data)?)
     }
 
@@ -99,7 +99,7 @@ impl Codec {
     /// # Errors
     ///
     /// Return `rmp_serde::decode::Error` if there is an issue deserializing the data.
-    pub fn deserialize<'a, T>(data: &'a [u8]) -> Result<T>
+    pub fn deserialize<'a, T>(&self, data: &'a [u8]) -> Result<T>
     where
         T: Deserialize<'a>,
     {
@@ -123,46 +123,68 @@ mod tests {
         assert_eq!(codec.level, 3);
     }
 
-	#[test]
+    #[test]
     fn test_default() {
         let codec = Codec::default();
         assert_eq!(codec.level, 1);
     }
 
-	#[test]
-	#[should_panic(expected = "level should be >= 0 and <= 22")] 
-	fn test_new_too_high_level() {
-		#[allow(unused_must_use)]
-		Codec::new(23);
-	}
+    #[test]
+    #[should_panic(expected = "level should be >= 0 and <= 22")]
+    fn test_new_too_high_level() {
+        #[allow(unused_must_use)]
+        Codec::new(23);
+    }
 
-	#[test]
-	fn test_compress() {
-		let data = vec![1, 2, 3, 4, 5];
-		for i in 0..22 {
-			let codec = Codec::new(i);
-			let compressed = codec.compress(&data).unwrap();
-			assert_ne!(data, compressed);
-		}
-	}
+    #[test]
+    fn test_compress() {
+        let data = vec![1, 2, 3, 4, 5];
 
-	#[test]
-	fn test_decompress() {
-		unimplemented!()
-	}
+        for i in 0..22 {
+            let codec = Codec::new(i);
+            let compressed = codec.compress(&data).unwrap();
+            assert_ne!(data, compressed);
+        }
+    }
 
-	#[test]
-	fn test_decompress_fail_invalid_data() {
-		unimplemented!()
-	}
+    #[test]
+    fn test_decompress() {
+        let expected = vec![1, 2, 3, 4, 5];
+        let compressed = [40, 181, 47, 253, 0, 72, 41, 0, 0, 1, 2, 3, 4, 5];
+        let codec = Codec::new(1);
 
-	#[test]
-	fn test_encode() {
-		unimplemented!()
-	}
+        let decompressed = codec.decompress(&compressed).unwrap();
+        assert_eq!(decompressed, expected);
+    }
 
-	#[test]
-	fn test_decode() {
-		unimplemented!()
-	}
+    #[test]
+    fn test_decompress_fail_invalid_data() {
+        let invalid: [u8; 14] = [
+            255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+        ];
+        let codec = Codec::new(1);
+
+        let decompressed = codec.decompress(&invalid);
+        assert!(decompressed.is_err());
+    }
+
+    #[test]
+    fn test_encode() {
+        let data = vec![1, 2, 3, 4, 5];
+        let codec = Codec::new(1);
+
+        let encoded = codec.encode(&data).unwrap();
+        let expected = [40, 181, 47, 253, 0, 72, 49, 0, 0, 149, 1, 2, 3, 4, 5];
+        assert_eq!(encoded, expected);
+    }
+
+    #[test]
+    fn test_decode() {
+        let encoded = [40, 181, 47, 253, 0, 72, 49, 0, 0, 149, 1, 2, 3, 4, 5];
+        let expected = vec![1, 2, 3, 4, 5];
+        let codec = Codec::new(1);
+
+        let decoded = codec.decode::<Vec<u8>>(&encoded).unwrap();
+        assert_eq!(decoded, expected);
+    }
 }
