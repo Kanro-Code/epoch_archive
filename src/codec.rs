@@ -64,7 +64,7 @@ impl Codec {
     /// # Errors
     ///
     /// Return `epoch_archive::CodecError` if there is an issue compressing the data.
-    pub fn compress(&self, data: &[u8]) -> Result<Vec<u8>> {
+    fn compress(&self, data: &[u8]) -> Result<Vec<u8>> {
         Ok(zstd::encode_all(data, self.level)?)
     }
 
@@ -77,7 +77,8 @@ impl Codec {
     /// # Errors
     ///
     /// Return `epoch_archive::CodecError` if there is an issue decompressing the data.
-    pub fn decompress(&self, data: &[u8]) -> Result<Vec<u8>> {
+    #[allow(clippy::unused_self)]
+    fn decompress(&self, data: &[u8]) -> Result<Vec<u8>> {
         Ok(zstd::decode_all(data)?)
     }
 
@@ -86,7 +87,7 @@ impl Codec {
     /// # Errors
     ///
     /// Return `epoch_archive::CodecError` if there is an issue serializing the data.
-    pub fn serialize<T: Serialize>(data: &T) -> Result<Vec<u8>> {
+    fn serialize<T: Serialize>(data: &T) -> Result<Vec<u8>> {
         let mut buf = Vec::new();
         let mut ser = rmp_serde::Serializer::new(&mut buf);
         data.serialize(&mut ser)?;
@@ -99,7 +100,8 @@ impl Codec {
     /// # Errors
     ///
     /// Return `rmp_serde::decode::Error` if there is an issue deserializing the data.
-    pub fn deserialize<'a, T>(&self, data: &'a [u8]) -> Result<T>
+    #[allow(clippy::unused_self)]
+    fn deserialize<'a, T>(&self, data: &'a [u8]) -> Result<T>
     where
         T: Deserialize<'a>,
     {
