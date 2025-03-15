@@ -16,6 +16,7 @@ impl Codec {
     ///
     /// * `level` - The level of compression to use. 0 is no compression, 1 is fastest, 22 is slowest.
     ///   Check the [zstd documentation](https://github.com/facebook/zstd) for more information.
+    ///   Defaults to `9`, which in my testing of 30mb json files was a compromise between speed/compression.
     ///
     /// # Panics
     ///
@@ -64,7 +65,7 @@ impl Codec {
     /// # Errors
     ///
     /// Return `epoch_archive::CodecError` if there is an issue compressing the data.
-    fn compress(&self, data: &[u8]) -> Result<Vec<u8>> {
+    pub fn compress(&self, data: &[u8]) -> Result<Vec<u8>> {
         Ok(zstd::encode_all(data, self.level)?)
     }
 
@@ -78,7 +79,7 @@ impl Codec {
     ///
     /// Return `epoch_archive::CodecError` if there is an issue decompressing the data.
     #[allow(clippy::unused_self)]
-    fn decompress(&self, data: &[u8]) -> Result<Vec<u8>> {
+    pub fn decompress(&self, data: &[u8]) -> Result<Vec<u8>> {
         Ok(zstd::decode_all(data)?)
     }
 
@@ -87,7 +88,7 @@ impl Codec {
     /// # Errors
     ///
     /// Return `epoch_archive::CodecError` if there is an issue serializing the data.
-    fn serialize<T: Serialize>(data: &T) -> Result<Vec<u8>> {
+    pub fn serialize<T: Serialize>(data: &T) -> Result<Vec<u8>> {
         let mut buf = Vec::new();
         let mut ser = rmp_serde::Serializer::new(&mut buf);
         data.serialize(&mut ser)?;
@@ -101,7 +102,7 @@ impl Codec {
     ///
     /// Return `rmp_serde::decode::Error` if there is an issue deserializing the data.
     #[allow(clippy::unused_self)]
-    fn deserialize<'a, T>(&self, data: &'a [u8]) -> Result<T>
+    pub fn deserialize<'a, T>(&self, data: &'a [u8]) -> Result<T>
     where
         T: Deserialize<'a>,
     {
@@ -111,7 +112,7 @@ impl Codec {
 
 impl Default for Codec {
     fn default() -> Self {
-        Self { level: 1 }
+        Self { level: 9 }
     }
 }
 
@@ -128,7 +129,7 @@ mod tests {
     #[test]
     fn test_default() {
         let codec = Codec::default();
-        assert_eq!(codec.level, 1);
+        assert_eq!(codec.level, 9);
     }
 
     #[test]
