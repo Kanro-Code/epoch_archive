@@ -1,3 +1,7 @@
+use crate::EpochError;
+
+use std::str::FromStr;
+
 const DELIMITER: char = '.';
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -173,6 +177,18 @@ pub enum SubSecond {
     Milli(u16),
     Micro(u32),
     Nano(u64),
+}
+
+impl FromStr for SubSecond {
+    type Err = EpochError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.len() {
+            3 => Ok(SubSecond::Milli(s.parse()?)),
+            6 => Ok(SubSecond::Micro(s.parse()?)),
+            9 => Ok(SubSecond::Nano(s.parse()?)),
+            _ => Err(EpochError::InvalidSubSecond(s.to_string())),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -353,6 +369,53 @@ mod tests {
         for (epoch, ms, delimiter, expected) in epochs {
             let epoch = Epoch::new(epoch).with_millis(ms);
             assert_eq!(epoch.format_with_delimiter(delimiter), expected);
+        }
+    }
+
+    #[test]
+    fn test_subsecond_from_str() {
+        let epochs = [
+            ("000", SubSecond::Milli(0)),
+            ("999", SubSecond::Milli(999)),
+            ("000000", SubSecond::Micro(0)),
+            ("999999", SubSecond::Micro(999_999)),
+            ("000000000", SubSecond::Nano(0)),
+            ("999999999", SubSecond::Nano(999_999_999)),
+        ];
+
+        for (epoch, expected) in epochs {
+            let epoch = SubSecond::from_str(epoch).unwrap();
+            assert_eq!(epoch, expected);
+        }
+    }
+
+    #[test]
+    fn test_subsecond_from_str_error() {
+        let epochs = [
+            "1",
+            "22",
+            "4444",
+            "55555",
+            "7777777",
+            "88888888",
+            "1234567890",
+            "-1",
+            "-333",
+            "-666666",
+            "-999999999",
+            "3.33",
+            "-3.33",
+            "aaa",
+            "bbbbbb",
+            "",
+            " ",
+            "00a",
+            "000.000.000",
+        ];
+
+        for epoch in epochs {
+            let epoch = SubSecond::from_str(epoch);
+            assert!(epoch.is_err());
         }
     }
 }

@@ -2,6 +2,7 @@
 #![deny(clippy::all)]
 #![warn(clippy::cargo)]
 #![warn(clippy::pedantic)]
+#![warn(clippy::perf)]
 
 mod codec;
 mod epoch;
@@ -12,3 +13,4 @@ pub use epoch::Epoch;
 pub use epoch::SubSecond;
 
 pub use error::Codec as CodecError;
+pub use error::Epoch as EpochError;

@@ -9,3 +9,10 @@ pub enum Codec {
     #[error("RMP Decode Error")]
     SerdeDecodeError(#[from] rmp_serde::decode::Error),
 }
+#[derive(Error, Debug)]
+pub enum Epoch {
+    #[error("Invalid SubSecond: {0}")]
+    InvalidSubSecond(String),
+    #[error("ParseIntError")]
+    InvalidEpoch(#[from] std::num::ParseIntError),
+}
